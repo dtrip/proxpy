@@ -1,0 +1,2 @@
+colorama==0.3.7
+PySocks==1.5.7
