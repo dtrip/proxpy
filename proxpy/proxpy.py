@@ -1,25 +1,37 @@
 #!/usr/bin/env python
-
 from __future__ import division, print_function
 
 import sys
 import traceback
 from colorama import init, Fore, Back, Style
 
+import os
 import arg
 import config
+import parser
+import server
+
+# if os.fork():
+    # sys.exit()
 
 class proxpy(object):
     def __init__(self):
  
         ap = arg.arg()
         self.args = ap.args
+
+        p = parser.parser(self)
+        self.proxies = p.proxies
+
        
     def run(self):
     
         if (self.args['debug']):
             print("Debugging Enabled")
 
+        print("Starting proxy server")
+
+        self.server = server.server(self)
 
 
 if __name__ == "__main__":

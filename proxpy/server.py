@@ -7,14 +7,16 @@ import os
 import thread
 
 class server(object):
-    def __init__(self, host, port):
+    def __init__(self, p):
+        self.proxpy = p
+        self.s = socket
         try: 
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.bind((host, port))
-            self.listen(BACKLOG)
+            self.s.bind((self.proxpy.args['interface'], self.proxpy.args['port']))
+            self.s.listen(self.proxpy.args['backlog'])
         except socket.error, (value, msg):
-            if s:
-                s.close()
+            if self.s:
+                self.s.close()
             print("Unable to open socket: %s" % (msg))
             raise
 
@@ -37,7 +39,7 @@ class server(object):
 
 
     def proxyThread(self, conn, client_addr):
-        req = conn.recv(MAX_DATA_RECV)
+        req = conn.recv(self.proxpy.args['receive'])
 
         fl = req.split('n')[0]
 
@@ -70,6 +72,7 @@ class server(object):
         print("Connect to: %s:%d" % (webserver, port))
 
         try:
+            pass
             # create socket and and make request
         except socket.error, (value, msg):
             if s:
