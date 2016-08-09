@@ -6,7 +6,8 @@ import argparse
 import ConfigParser
 
 class arg(object):
-    def __init__(self):
+    def __init__(self, p):
+        self.proxpy = p
         self.parser = argparse
         self.args = None
         self.boolArgs = ['debug', 'daemon', 'dns', 'verbose', 'quiet']
@@ -70,10 +71,12 @@ class arg(object):
         if (self.args['verbose']):
             self.args['debug'] = True
 
-        if (self.args['debug']):
-            print(self.args)
-
         return True
+
+    def argList(self):
+        if (self.args['debug']):
+            for k,v in self.args.iteritems():
+                self.proxpy.log.debug("%s:\t%s (%s)", (k,v, str(type(v))[7:-2]))
 
     @staticmethod
     def setBoolean(s):

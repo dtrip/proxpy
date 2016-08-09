@@ -9,7 +9,8 @@ from sockshandler import SocksiPyHandler
 
 class upstream(object):
 
-    def __init__(self):
+    def __init__(self, p):
+        self.proxpy = p
         # self.opener = None
         # self.socksHandler = None
         self.s = None
@@ -21,7 +22,7 @@ class upstream(object):
         assert host is not None
         assert port is not None and type(port) is int and port > 0 and port <= 65535
 
-        print("connecting to socks proxy: %s:%d " % (host, port))
+        self.proxpy.log.debug("connecting to socks proxy: %s:%d", (host, port))
         # socks proxy type can be socks.SOCKS5, socks.SOCKS4, socks.HTTP
         try:
             self.s.set_proxy(socks.SOCKS5, host, port, True)
@@ -45,7 +46,7 @@ class upstream(object):
         
         assert url is not None
 
-        print("Making request to %s:%d" % (url, port))
+        self.proxpy.log.debug("Making request to %s:%d", (url, port))
 
         # return self.opener.open(url)
         try:
@@ -63,7 +64,7 @@ class upstream(object):
         self.s.sendall(req)
         status = self.s.recv(2048)
 
-        print("Status: %s" % (status))
+        self.proxpy.log.debug("Status: %s", (status))
         return True
 
 
@@ -77,5 +78,5 @@ class upstream(object):
         req += "Accept: %s\r\n" % (acpt)
         req += "\r\n"
 
-        print(req)
+        self.proxpy.log.debug(req)
         return req.encode()

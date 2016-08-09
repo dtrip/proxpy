@@ -2,51 +2,50 @@
 
 from __future__ import division, print_function
 
-import socket
 import os
-import thread
+import sys
+# from threading import Thread
+import threading
+import socket
+import signal
+# import receiver
 
 class server(object):
     def __init__(self, p):
+
         self.proxpy = p
-        self.s = socket
+        # self.s = socket
+
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try: 
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.s.bind((self.proxpy.args['interface'], self.proxpy.args['port']))
-            self.s.listen(self.proxpy.args['backlog'])
-        except socket.error, (value, msg):
-            if self.s:
-                self.s.close()
-            print("Unable to open socket: %s" % (msg))
+            self.s.listen(int(self.proxpy.args['backlog']))
+            self.clients = {}
+            self.__srvLoop()
+        except socket.error as e:
+            # pass
+            # if self.s:
+                # self.s.close()
+
+            self.proxpy.log.error("Unable to open socket: %s", (str(e)))
             raise
 
-        self.__srvLoop()
 
     def __srvLoop(self):
         while True:
-            try:
-                conn, clientAdr = s.accept()
+            (conn, addr) = self.s.accept()
+            d = threading.Thread(target=self.proxy_thread, args=(conn, addr))
+            d.setDaemon(True)
+            d.start()
+        self.shutdown(0,0)
+        
 
-                thread.start_new_thread(proxy_thread, (conn, client_addr))
-            except ValueError as e:
-                pass
-            except Exception as e:
-                pass
-            finally:
-                self.s.close()
+    def proxy_thread(self, conn, addr):
+        request = conn.recv(self.proxpy.args['receive'])
 
-        return True
-
-
-    def proxyThread(self, conn, client_addr):
-        req = conn.recv(self.proxpy.args['receive'])
-
-        fl = req.split('n')[0]
-
-        url = fl.split(' ')[1]
-
-        if (self.proxpy.args['debug']):
-            print("%s\n%s\n" % (fl, url))
+        first_line = request.split('\n')[0]
+        url = first_line.split(' ')[1]
 
         http_pos = url.find("://")
 
@@ -62,27 +61,53 @@ class server(object):
         if (webserver_pos == -1):
             webserver_pos = len(temp)
 
-        if (port_pos == -1 or webserver_pos < port_pos):
+        webserver = ""
+        port = -1
+
+        if (port_pos == -1 or webserver < port_pos):
             port = 80
-            webserver_pos = temp[:webserver_pos]
+            webserver = temp[:webserver_pos]
         else:
             port = int((temp[(port_pos+1):])[:webserver_pos-port_pos-1])
             webserver = temp[:port_pos]
 
-        print("Connect to: %s:%d" % (webserver, port))
 
         try:
-            pass
-            # create socket and and make request
-        except socket.error, (value, msg):
+
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(5)
+            s.connect((webserver, port))
+            s.sendall(request)
+
+            while 1:
+                data = s.recv(self.proxpy.args['receive'])
+
+                if (len(data) > 0):
+                    conn.send(data)
+                else:
+                    break
+            s.close()
+            conn.close()
+        except socket.error as e:
+            self.proxpy.log.error(e)
+
             if s:
                 s.close()
-            
+
             if conn:
                 conn.close()
 
-            print("Runtime Error: %s" % (msg));
-            
+    def shutdown(self, signum, frame):
+        self.proxpy.log.warning("Attempting to shutdown gracefully")
 
-            
+        main_thread = threading.currentThread()
 
+        for t in threading.enumerate():
+            if t is main_thread:
+                continue
+                self.proxpy.log.error("Error joining " + t.getName())
+
+            t.join()
+            self.s.close()
+        # self.s.close()
+        sys.exit(0)

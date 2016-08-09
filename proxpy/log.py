@@ -14,14 +14,33 @@ class log(object):
 
     def info(self, msg, vars=()):
         logging.info(msg % (vars))
-        msg = Fore.BLUE + "[!] " + msg + Style.RESET_ALL
+        msg = Fore.GREEN + Style.BRIGHT + "[!] " + Style.RESET_ALL + msg
 
         if (self.proxpy.args['quiet'] is not True):
             print(msg % (vars))
 
     def debug(self, msg, vars=()):
         logging.debug(msg % (vars))
+        msg = Fore.BLUE + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+
+        if (self.proxpy.args['quiet'] is not True):
+            print(msg % (vars))
+
+    def warning(self, msg, vars=()):
+        logging.warning(msg % (vars))
+
+        msg = Fore.YELLOW + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+
+        if (self.proxpy.args['quiet'] is not True):
+            print(msg % (vars))
 
     def error(self, msg, vars=()):
         logging.error(msg % (vars))
+
+        msg = Fore.RED + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+
+        if (self.proxpy.args['quiet'] is not True):
+            print(msg % (vars))
+
+
 

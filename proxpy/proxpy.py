@@ -12,29 +12,37 @@ import parser
 import server
 import log
 
+print(Fore.YELLOW + Style.BRIGHT + '''
+ ____                                         
+/\  _`\                                        
+\ \ \L\ \_ __   ___   __  _  _____   __  __    
+ \ \ ,__/\`'__\/ __`\/\ \/'\/\ '__`\/\ \/\ \   
+  \ \ \/\ \ \//\ \L\ \/>  </\ \ \L\ \ \ \_\ \  
+   \ \_\ \ \_\\\\ \____//\_/\_\\\\ \ ,__/\/`____ \ 
+    \/_/  \/_/ \/___/ \//\/_/ \ \ \/  `/___/> \\
+                               \ \_\     /\___/
+                                \/_/     \/__/ 
+
+''' + Style.RESET_ALL)
+
 # if os.fork():
     # sys.exit()
 
 class proxpy(object):
     def __init__(self):
  
-        ap = arg.arg()
+        ap = arg.arg(self)
         self.args = ap.args
+        self.log = log.log(self)
+
+        ap.argList()
 
         p = parser.parser(self)
         self.proxies = p.proxies
-
-        # l = log.log(self)
-        self.log = log.log(self)
-        self.log.info("test info")
-
        
     def run(self):
     
-        if (self.args['debug']):
-            print("Debugging Enabled")
-
-        print("Starting proxy server")
+        self.log.info("Starting proxy service")
 
         self.server = server.server(self)
 
