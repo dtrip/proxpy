@@ -10,6 +10,7 @@ import arg
 import config
 import parser
 import server
+import log
 
 # if os.fork():
     # sys.exit()
@@ -22,6 +23,10 @@ class proxpy(object):
 
         p = parser.parser(self)
         self.proxies = p.proxies
+
+        # l = log.log(self)
+        self.log = log.log(self)
+        self.log.info("test info")
 
        
     def run(self):

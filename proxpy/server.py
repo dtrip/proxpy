@@ -28,12 +28,12 @@ class server(object):
                 conn, clientAdr = s.accept()
 
                 thread.start_new_thread(proxy_thread, (conn, client_addr))
-            except valueError as e:
+            except ValueError as e:
                 pass
             except Exception as e:
                 pass
             finally:
-                s.close()
+                self.s.close()
 
         return True
 
@@ -45,7 +45,7 @@ class server(object):
 
         url = fl.split(' ')[1]
 
-        if (self.args.debug):
+        if (self.proxpy.args['debug']):
             print("%s\n%s\n" % (fl, url))
 
         http_pos = url.find("://")

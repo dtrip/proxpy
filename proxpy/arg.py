@@ -9,7 +9,7 @@ class arg(object):
     def __init__(self):
         self.parser = argparse
         self.args = None
-        self.boolArgs = ['debug', 'daemon', 'dns', 'verbose', 'auth']
+        self.boolArgs = ['debug', 'daemon', 'dns', 'verbose', 'quiet']
  
         self.__parseArgs()
 
@@ -51,9 +51,10 @@ class arg(object):
         self.parser.add_argument('-m', '--receive', help='maxium number of bytes proxy service will receive', metavar='N', type=int)
 
         self.parser.add_argument('-p', '--port', help='proxy service port', metavar='N', type=int)
+        self.parser.add_argument('-q', '--quiet', help='suppress output', action='store_true')
         self.parser.add_argument('-r', '--dns', help='Perform DNS lookup\'s over SOCKS proxxy', action='store_true')
         self.parser.add_argument('-s', '--daemon', help='Enable Proxy deamon service', action='store_true')
-        self.parser.add_argument('-t', '--transparent', help='run proxy daemon as transparent proxy', action='store_true')
+        # self.parser.add_argument('-t', '--transparent', help='run proxy daemon as transparent proxy', action='store_true')
         self.parser.add_argument('-u', '--upstreams', help='Config file containing list of upstream proxies', metavar='FILE')
 
         self.parser.add_argument('-v', '--verbose', help='Verbose output for debugging', action='store_true')
@@ -69,9 +70,9 @@ class arg(object):
         if (self.args['verbose']):
             self.args['debug'] = True
 
-
         if (self.args['debug']):
             print(self.args)
+
         return True
 
     @staticmethod
