@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
-
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore, Style
 import logging
 
-class log(object):
+
+class log(logging):
 
     def __init__(self, p):
         self.proxpy = p
- 
         self.log = logging.basicConfig(filename=self.proxpy.args['log'], 
                 level=(logging.DEBUG if self.proxpy.args['debug'] else logging.INFO))
 
@@ -41,6 +40,3 @@ class log(object):
 
         if (self.proxpy.args['quiet'] is not True):
             print(msg % (vars))
-
-
-

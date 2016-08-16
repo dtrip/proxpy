@@ -45,6 +45,7 @@ class proxpy(object):
         self.log.info("Starting proxy service")
 
         self.server = server.server(self)
+        self.server.listenClients()
 
 
 if __name__ == "__main__":

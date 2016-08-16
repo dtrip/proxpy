@@ -1,20 +1,22 @@
 #!/usr/bin/env python
-
 from __future__ import division, print_function
-import urllib2
+# import urllib2
 import socks
-import types
-import numbers
-from sockshandler import SocksiPyHandler
+# import types
+# import numbers
+import logging
+# from sockshandler import SocksiPyHandler
+
 
 class upstream(object):
 
-    def __init__(self, p):
-        self.proxpy = p
+    def __init__(self, p=None):
+        if p is not None:
+            self.proxpy = p
+        logging.info("test")
         # self.opener = None
         # self.socksHandler = None
         self.s = None
- 
 
     def createSocket(self, host, port):
         self.s = socks.socksocket()
@@ -22,7 +24,7 @@ class upstream(object):
         assert host is not None
         assert port is not None and type(port) is int and port > 0 and port <= 65535
 
-        self.proxpy.log.debug("connecting to socks proxy: %s:%d", (host, port))
+        # self.proxpy.log.debug("connecting to socks proxy: %s:%d", (host, port))
         # socks proxy type can be socks.SOCKS5, socks.SOCKS4, socks.HTTP
         try:
             self.s.set_proxy(socks.SOCKS5, host, port, True)
@@ -41,32 +43,30 @@ class upstream(object):
     def closeSocket(self):
         return self.s.close()
 
-    
     def connectHost(self, url, port=80): 
-        
         assert url is not None
 
-        self.proxpy.log.debug("Making request to %s:%d", (url, port))
+        logging.debug("Connecting to host %s:%d", (url, port))
 
         # return self.opener.open(url)
         try:
-            return self.s.connect((url,port))
-        except self.s.ProxyConnectionError as e:
+            return self.s.connect((url, port))
+        except self.s.ProxyConnectionError:
             raise
-        except self.s.GeneralProxyError as e:
+        except self.s.GeneralProxyError:
             raise
-        except Exception as e:
+        except Exception:
             raise
         return False
 
     def makeRequest(self, host, url="/"):
+        assert self.s is not None and type(self.s) is socks
         req = self.rawHttpReq(host)
         self.s.sendall(req)
         status = self.s.recv(2048)
 
-        self.proxpy.log.debug("Status: %s", (status))
+        # self.proxpy.log.debug("Status: %s", (status))
         return True
-
 
     def rawHttpReq(self, host, url="/", userAgent="Proxpy", acpt="*/*"):
 

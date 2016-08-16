@@ -4,48 +4,65 @@ from __future__ import division, print_function
 
 import os
 import sys
-# from threading import Thread
 import threading
 import socket
 import signal
 # import receiver
 
-class server(object):
+class server():
     def __init__(self, p):
 
         self.proxpy = p
         # self.s = socket
 
+        signal.signal(signal.SIGINT, self.shutdown)
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try: 
-            self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.s.bind((self.proxpy.args['interface'], self.proxpy.args['port']))
-            self.s.listen(int(self.proxpy.args['backlog']))
-            self.clients = {}
-            self.__srvLoop()
-        except socket.error as e:
+        # try: 
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.s.bind((self.proxpy.args['interface'], self.proxpy.args['port']))
+        self.s.listen(int(self.proxpy.args['backlog']))
+        self.clients = {}
+        # self.__srvLoop()
+        # except socket.error as e:
             # pass
             # if self.s:
                 # self.s.close()
 
-            self.proxpy.log.error("Unable to open socket: %s", (str(e)))
-            raise
+            # self.proxpy.log.error("Unable to open socket: %s", (str(e)))
+            # raise
 
 
-    def __srvLoop(self):
+    def listenClients(self):
         while True:
-            (conn, addr) = self.s.accept()
-            d = threading.Thread(target=self.proxy_thread, args=(conn, addr))
-            d.setDaemon(True)
-            d.start()
+            try:
+                (conn, addr) = self.s.accept()
+                data = conn.recv(self.proxpy.args['receive'])
+                print(data)
+                d = threading.Thread(target=self.proxy_thread, args=(conn, data, addr))
+                d.setDaemon(True)
+                d.start()
+            except socket.error as e:
+                self.proxpy.log.error(e)
+
         self.shutdown(0,0)
         
 
-    def proxy_thread(self, conn, addr):
-        request = conn.recv(self.proxpy.args['receive'])
+    def proxy_thread(self, conn, data, addr):
+        self.proxpy.log.debug("Addr: %s", (addr, ))
+        # request = conn.recv(self.proxpy.args['receive'])
 
-        first_line = request.split('\n')[0]
-        url = first_line.split(' ')[1]
+        # print(request.decode())
+        # print(type(request))
+
+        first_line = data.split('\n')[0]
+
+        print("'" + first_line.decode() + "'")
+        print(len(first_line))
+        if (len(first_line) > 0):
+            url = first_line.split(' ')[1]
+        else:
+            url = ""
 
         http_pos = url.find("://")
 
@@ -89,7 +106,8 @@ class server(object):
             s.close()
             conn.close()
         except socket.error as e:
-            self.proxpy.log.error(e)
+            # self.proxpy.log.error(e)
+            print(str(e))
 
             if s:
                 s.close()
