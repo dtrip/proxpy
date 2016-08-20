@@ -1,19 +1,22 @@
 #!/usr/bin/env python
-
 from __future__ import division, print_function
+import logging
+
+log = logging.getLogger()
+
 
 class parser(object):
-    def __init__(self, p):
-        self.proxpy = p
+    def __init__(self, conf):
         self.rdata = []
         self.proxies = []
+        self.conf = conf
         self.__readFile()
 
     def __readFile(self):
 
-        self.proxpy.log.debug("Opening upstreams file for parsing: %s", (self.proxpy.args['upstreams']))
+        log.debug("Opening upstreams file for parsing: %s" % (self.conf))
 
-        with open(self.proxpy.args['upstreams'], 'r') as f:
+        with open(self.conf, 'r') as f:
             for line in f:
                 line = line.strip('\t\n\r')
                 if (line[0:1] is not '#' and len(line) > 0):
@@ -28,15 +31,13 @@ class parser(object):
             raise ValueError("No data proxy list data to parse")
 
         for px in self.rdata:
-            pxs = parser.splitProxyString(px, self.proxpy.args['debug'])
+            pxs = parser.splitProxyString(px)
 
-            self.proxpy.log.debug("Proxy Parsed. Type: %s Host: %s Port: %s Username: %s Password: %s" , (pxs[0],pxs[1],pxs[2],"*"*len(pxs[3]),"*"*len(pxs[4])))
-            self.proxies.append({"type": pxs[0], "host": pxs[1], "port": pxs[2], "username": pxs[3], "password": pxs[4] })
+            log.debug("Proxy Parsed. Type: %s Host: %s Port: %s Username: %s Password: %s" % (pxs[0], pxs[1], pxs[2], "*" * len(pxs[3]), "*" * len(pxs[4])))
+            self.proxies.append({"type": pxs[0], "host": pxs[1], "port": pxs[2], "username": pxs[3], "password": pxs[4]})
 
-    
     @staticmethod
-    def splitProxyString(proxyString, debug=False): 
-        
+    def splitProxyString(proxyString): 
         splitTmp = proxyString.split("://")
         type = splitTmp[0].lower()
 
@@ -58,6 +59,4 @@ class parser(object):
             host = splitTmp[1].split(":")[0]
             port = splitTmp[1].split(":")[1]
 
-
         return [type, host, port, uname, passw]
-

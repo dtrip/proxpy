@@ -2,18 +2,21 @@
 from __future__ import division, print_function
 # import urllib2
 import socks
+import threading
 # import types
 # import numbers
 import logging
-# from sockshandler import SocksiPyHandler
+# from sockshandler import SocksiPyHandler       
+log = logging.getLogger()
 
 
-class upstream(object):
+class upstream(threading.Thread):
 
-    def __init__(self, p=None):
-        if p is not None:
-            self.proxpy = p
-        logging.info("test")
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+        # if p is not None:
+        # self.proxpy = p
         # self.opener = None
         # self.socksHandler = None
         self.s = None
@@ -24,24 +27,21 @@ class upstream(object):
         assert host is not None
         assert port is not None and type(port) is int and port > 0 and port <= 65535
 
-        # self.proxpy.log.debug("connecting to socks proxy: %s:%d", (host, port))
+        log.debug("connecting to socks proxy: %s:%d" % (host, port))
         # socks proxy type can be socks.SOCKS5, socks.SOCKS4, socks.HTTP
         try:
             self.s.set_proxy(socks.SOCKS5, host, port, True)
         except self.s.ProxyConnectionError as e:
-            print(str(e))
+            log.exception(e.message)
             raise
         except self.s.GeneralProxyError as e:
-            print(str(e))
+            log.exception(e.message)
             raise
         except Exception as e:
-            print(str(e))
+            log.exception(e.message)
             raise
 
         return True
-
-    def closeSocket(self):
-        return self.s.close()
 
     def connectHost(self, url, port=80): 
         assert url is not None
@@ -65,7 +65,7 @@ class upstream(object):
         self.s.sendall(req)
         status = self.s.recv(2048)
 
-        # self.proxpy.log.debug("Status: %s", (status))
+        logging.debug("Status: %s", (status))
         return True
 
     def rawHttpReq(self, host, url="/", userAgent="Proxpy", acpt="*/*"):

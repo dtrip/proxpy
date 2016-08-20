@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-
 from __future__ import division, print_function
-
-import os
 import sys
 import threading
 import socket
 import signal
 # import receiver
+
 
 class server():
     def __init__(self, p):
@@ -25,13 +23,9 @@ class server():
         self.clients = {}
         # self.__srvLoop()
         # except socket.error as e:
-            # pass
-            # if self.s:
-                # self.s.close()
 
-            # self.proxpy.log.error("Unable to open socket: %s", (str(e)))
-            # raise
-
+        # self.proxpy.log.error("Unable to open socket: %s", (str(e)))
+        # raise
 
     def listenClients(self):
         while True:
@@ -45,12 +39,11 @@ class server():
             except socket.error as e:
                 self.proxpy.log.error(e)
 
-        self.shutdown(0,0)
-        
+        self.shutdown(0, 0)
 
     def proxy_thread(self, conn, data, addr):
-        self.proxpy.log.debug("Addr: %s", (addr, ))
-        # request = conn.recv(self.proxpy.args['receive'])
+        self.proxpy.log.debug("Addr: %s" % (addr))
+        request = conn.recv(self.proxpy.args['receive'])
 
         # print(request.decode())
         # print(type(request))
@@ -69,7 +62,7 @@ class server():
         if (http_pos == -1):
             temp = url
         else:
-            temp = url[(http_pos+3):]
+            temp = url[(http_pos + 3):]
 
         port_pos = temp.find(":")
 
@@ -85,12 +78,10 @@ class server():
             port = 80
             webserver = temp[:webserver_pos]
         else:
-            port = int((temp[(port_pos+1):])[:webserver_pos-port_pos-1])
+            port = int((temp[(port_pos + 1):])[:webserver_pos - port_pos - 1])
             webserver = temp[:port_pos]
 
-
         try:
-
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(5)
             s.connect((webserver, port))

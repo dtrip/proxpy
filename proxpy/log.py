@@ -1,42 +1,60 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
-from colorama import init, Fore, Style
+from colorama import Fore, Style
 import logging
+import traceback
 
 
-class log(logging):
+class log(logging.getLoggerClass()):
+    __FORMAT = {
+        'fmt': ('[%(levelname).1s] %(message)s'),
+        'datefmt': '%Y-%m-%d %H-%M-%S' 
+    }
 
-    def __init__(self, p):
-        self.proxpy = p
-        self.log = logging.basicConfig(filename=self.proxpy.args['log'], 
-                level=(logging.DEBUG if self.proxpy.args['debug'] else logging.INFO))
+    def __init__(self, format=__FORMAT):
+        formatter = LogFormatter()
+        self.root.setLevel(logging.DEBUG)
+        self.root.handlers = []
+        self.handler = logging.StreamHandler()
+        self.handler.setFormatter(formatter)
+        self.root.addHandler(self.handler)
 
-    def info(self, msg, vars=()):
-        logging.info(msg % (vars))
-        msg = Fore.GREEN + Style.BRIGHT + "[!] " + Style.RESET_ALL + msg
+    def info(self, msg, *vars):
+        self.root.info(msg % vars)
 
-        if (self.proxpy.args['quiet'] is not True):
-            print(msg % (vars))
+    def debug(self, msg, *vars):
+        self.root.debug(msg % vars)
 
-    def debug(self, msg, vars=()):
-        logging.debug(msg % (vars))
-        msg = Fore.BLUE + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+    def warning(self, msg, *vars):
+        self.root.warning(msg % vars)
 
-        if (self.proxpy.args['quiet'] is not True):
-            print(msg % (vars))
+    def error(self, msg, *vars):
+        self.root.error(msg % vars)
 
-    def warning(self, msg, vars=()):
-        logging.warning(msg % (vars))
 
-        msg = Fore.YELLOW + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+class LogFormatter(logging.Formatter):
+    err_fmt = Style.BRIGHT + Fore.RED + "[E]" + Style.RESET_ALL + " %(module)s:%(lineno)s %(msg)s" + str(traceback.print_exc())
+    dbg_fmt = Style.BRIGHT + Fore.BLUE + "[*]" + Style.RESET_ALL + " %(msg)s"
+    inf_fmt = Style.BRIGHT + Fore.GREEN + "[!]" + Style.RESET_ALL + " %(msg)s"
+    wrn_fmt = Style.BRIGHT + Fore.YELLOW + "[W]" + Style.RESET_ALL + " %(msg)s"
 
-        if (self.proxpy.args['quiet'] is not True):
-            print(msg % (vars))
+    def __init__(self, fmt="%(levelno): %(msg)s"):
+        logging.Formatter.__init__(self, fmt)
 
-    def error(self, msg, vars=()):
-        logging.error(msg % (vars))
+    def format(self, record):
 
-        msg = Fore.RED + Style.BRIGHT + "[*] " + Style.RESET_ALL + msg
+        format_orig = self._fmt
 
-        if (self.proxpy.args['quiet'] is not True):
-            print(msg % (vars))
+        if record.levelno == logging.DEBUG:
+            self._fmt = LogFormatter.dbg_fmt
+        elif record.levelno == logging.INFO:
+            self._fmt = LogFormatter.inf_fmt
+        elif record.levelno == logging.ERROR:
+            self._fmt = LogFormatter.err_fmt
+        elif record.levelno == logging.WARNING:
+            self._fmt = LogFormatter.wrn_fmt
+
+        result = logging.Formatter.format(self, record)
+        self._fmt = format_orig
+
+        return result 
