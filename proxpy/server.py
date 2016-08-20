@@ -45,9 +45,6 @@ class server():
         self.proxpy.log.debug("Addr: %s" % (addr))
         request = conn.recv(self.proxpy.args['receive'])
 
-        # print(request.decode())
-        # print(type(request))
-
         first_line = data.split('\n')[0]
 
         print("'" + first_line.decode() + "'")
@@ -118,5 +115,4 @@ class server():
 
             t.join()
             self.s.close()
-        # self.s.close()
         sys.exit(0)
