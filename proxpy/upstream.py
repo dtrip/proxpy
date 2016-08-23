@@ -12,8 +12,14 @@ log = logging.getLogger()
 
 class upstream(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, pool, host, port, domain, url):
         threading.Thread.__init__(self)
+
+        self.pool = pool
+        self.host = host
+        self.port = port
+        self.domain = domain
+        self.url = url
 
         # if p is not None:
         # self.proxpy = p
@@ -43,34 +49,59 @@ class upstream(threading.Thread):
 
         return True
 
+    def run(self):
+        # limiter = threading.BoundSemaphore(
+        log.debug("runing")
+
+        self.pool.acquire()
+
+        try:
+            log.debug("adding thread %s to pool" % self.getName())
+            if (self.s is None):
+                self.createSocket(self.host, int(self.port))
+
+            self.makeRequest(self.domain, self.url)
+
+        finally:
+            log.debug("Closing thread: %s" % self.getName())
+            self.pool.release()
+            # thread
+
     def connectHost(self, url, port=80): 
         assert url is not None
 
-        logging.debug("Connecting to host %s:%d", (url, port))
+        log.debug("Connecting to host %s:%d" % (url, port))
 
         # return self.opener.open(url)
         try:
             return self.s.connect((url, port))
-        except self.s.ProxyConnectionError:
+        except self.s.ProxyConnectionError as e:
+            log.warn(e.message)
             raise
-        except self.s.GeneralProxyError:
+        except self.s.GeneralProxyError as e:
+            log.warn(e.message)
             raise
-        except Exception:
+        except Exception as e:
+            log.exception(e.message)
             raise
         return False
 
     def makeRequest(self, host, url="/"):
         assert self.s is not None and type(self.s) is socks
+
         req = self.rawHttpReq(host)
+
         self.s.sendall(req)
         status = self.s.recv(2048)
 
-        logging.debug("Status: %s", (status))
+        log.debug("Status: %s" % (status))
         return True
 
     def rawHttpReq(self, host, url="/", userAgent="Proxpy", acpt="*/*"):
 
         assert host is not None
+
+        log.debug("Building request for: %s%s" % (host, url))
 
         req = "GET %s HTTP/1.1\r\n" % (url)
         req += "Host: %s\r\n" % (host)
