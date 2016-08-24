@@ -9,6 +9,11 @@ import logging
 # from sockshandler import SocksiPyHandler       
 log = logging.getLogger()
 
+try:
+    from http_parser.parser import HttpParser
+except ImportError:
+    from http_parser.pyparser import HttpParser  # noqa: F401
+
 
 class upstream(threading.Thread):
 
@@ -29,15 +34,18 @@ class upstream(threading.Thread):
         self.url = url
         self.timeout = timeout
         self.e = None
+        self.q = None
 
-        # if p is not None:
-        # self.proxpy = p
-        # self.opener = None
-        # self.socksHandler = None
         self.s = None
 
+    # set threads event handler to wait for socket connection before making request
     def setThreadEvent(self, e):
         self.e = e
+        return True
+
+    # set queue for returning data
+    def setQueue(self, q):
+        self.q = q
         return True
 
     def createSocket(self, host, port):
@@ -69,19 +77,22 @@ class upstream(threading.Thread):
         assert self.e is not None
 
         self.pool.acquire()
+        res = None
 
         try:
             log.debug("adding thread %s to pool" % self.getName())
             if (self.s is None):
                 self.createSocket(self.host, int(self.port))
 
-            self.makeRequest(self.domain, self.url)
+            res = self.makeRequest(self.domain, self.url)
         except Exception as e:
             log.exception(e.message)
         finally:
             log.debug("Closing thread: %s" % self.getName())
             self.pool.release()
             # thread
+
+        return res
 
     def connectHost(self, url, port=80): 
         assert url is not None
@@ -106,32 +117,38 @@ class upstream(threading.Thread):
 
     def makeRequest(self, host, url="/", port=80):
         assert self.e is not None
-        evSet = self.e.wait()
+        evSet = self.e.wait()  # noqa: F841
         # log.debug("Generating raw http request")
         self.s.connect((host, port))
         req = self.rawHttpReq(host, self.url)
 
         self.s.sendall(req)
-        status = self.s.recv(2048)
 
-        log.debug("Status: %s" % (status))
-        return True
+        headers = []
+        body = []
+        p = HttpParser()
 
-        # while not self.e.isSet():
-        #     evSet = self.e.wait()
-        #
-        #     log.debug("evSet: %s%s" % (evSet, type(evSet)))
-        #     if evSet:
-        #         log.debug("Generating raw http request")
-        #         req = self.rawHttpReq(host)
-        #
-        #         self.s.sendall(req)
-        #         status = self.s.recv(2048)
-        #
-        #         log.debug("Status: %s" % (status))
-        #         # return True
-        #     else:
-        #         log.debug("Event not yet set")
+        while True:
+            data = self.s.recv(2048)
+
+            if not data:
+                break
+
+            rlen = len(data)
+            nparsed = p.execute(data, rlen)
+            assert nparsed == rlen
+
+            if p.is_headers_complete():
+                headers = p.get_headers()
+                # log.debug(p.get_headers())
+            if p.is_partial_body():
+                body.append(p.recv_body())
+
+            if p.is_message_complete():
+                break
+
+        self.s.close()
+        self.q.put({'status': p.get_status_code(), 'headers': headers, 'body': body})
 
     def rawHttpReq(self, host, url="/", userAgent="Proxpy", acpt="*/*"):
 

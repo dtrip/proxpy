@@ -1,3 +1,4 @@
 colorama==0.3.7
 configparser==3.5.0
+http-parser==0.8.3
 PySocks==1.5.7
