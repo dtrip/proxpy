@@ -33,8 +33,15 @@ class parser(object):
         for px in self.rdata:
             pxs = parser.splitProxyString(px)
 
-            log.debug("Proxy Parsed. Type: %s Host: %s Port: %s Username: %s Password: %s" % (pxs[0], pxs[1], pxs[2], "*" * len(pxs[3]), "*" * len(pxs[4])))
             self.proxies.append({"type": pxs[0], "host": pxs[1], "port": pxs[2], "username": pxs[3], "password": pxs[4]})
+
+            if (pxs[3] is None):
+                pxs[3] = ''
+
+            if (pxs[4] is None):
+                pxs[4] = ''
+
+            log.debug("Proxy Parsed. Type: %s Host: %s Port: %s Username: %s Password: %s" % (pxs[0], pxs[1], pxs[2], "*" * len(pxs[3]), "*" * len(pxs[4])))
 
     @staticmethod
     def splitProxyString(proxyString): 
@@ -44,8 +51,8 @@ class parser(object):
         if (type == 'https'):
             type = 'http'
 
-        uname = ''
-        passw = ''
+        uname = None
+        passw = None
 
         # if '@' is in connection string 
         # will parse username/password for proxy authentcation
@@ -59,4 +66,4 @@ class parser(object):
             host = splitTmp[1].split(":")[0]
             port = splitTmp[1].split(":")[1]
 
-        return [type, host, port, uname, passw]
+        return [type, host, int(port), uname, passw]
