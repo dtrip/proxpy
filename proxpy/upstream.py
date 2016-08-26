@@ -102,18 +102,16 @@ class upstream(threading.Thread):
         self.pool.acquire()
         res = None
 
-        try:
-            log.debug("adding thread %s to pool" % self.getName())
-            if (self.s is None):
-                self.createSocket(self.prx)
+        log.debug("adding thread %s to pool" % self.getName())
 
-            res = self.makeRequest(self.domain, self.url, self.port, self.method, self.headers, self.postdata)
-        except Exception as e:
-            log.exception(e.message)
-        finally:
-            log.debug("Closing thread: %s" % self.getName())
-            self.pool.release()
-            # thread
+        if (self.s is None):
+            self.createSocket(self.prx)
+
+        res = self.makeRequest(self.domain, self.url, self.port, self.method, self.headers, self.postdata)
+
+        log.debug("Closing thread: %s" % self.getName())
+        self.pool.release()
+        # thread
 
         return res
 
