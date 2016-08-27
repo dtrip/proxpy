@@ -115,28 +115,6 @@ class upstream(threading.Thread):
 
         return res
 
-    # connects to host in which requests will be made to
-    def connectHost(self, url, port=80): 
-        assert url is not None
-
-        log.debug("Connecting to host %s:%d" % (url, port))
-
-        # return self.opener.open(url)
-        try:
-            return self.s.connect((url, port))
-        except self.s.ProxyConnectionError as e:
-            log.warning(e.message)
-            raise
-        except self.s.GeneralProxyError as e:
-            log.warning(e.message)
-            raise
-        except Exception as e:
-            log.exception(e.message)
-            raise
-        finally:
-            log.debug("Connected")
-        return False
-
     def makeRequest(self, host, url="/", port=80, method='GET', headers=None, postdata=None):
         assert self.e is not None
         evSet = self.e.wait()  # noqa: F841
