@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 # import urllib2
+# import sys
 import socks
 import threading
 # import types
@@ -18,7 +19,7 @@ except ImportError:
 
 class upstream(threading.Thread):
 
-    def __init__(self, pool, prx, domain, url, port=80, method="GET", headers=None, postdata=None, timeout=10):
+    def __init__(self, prx, domain, url, port=80, method="GET", headers=None, postdata=None, timeout=10):
         threading.Thread.__init__(self)
 
         self.txtType = prx['type']
@@ -30,7 +31,7 @@ class upstream(threading.Thread):
         else: 
             self.type = socks.SOCKS5
 
-        self.pool = pool
+        # self.pool = pool
         self.prx = prx
 
         self.domain = domain
@@ -50,10 +51,15 @@ class upstream(threading.Thread):
         self.s = None
         self.method = method
 
+        self.createSocket(prx)
+
     # set threads event handler to wait for socket connection before making request
     def setThreadEvent(self, e):
         self.e = e
         return True
+
+    def getThreadEvent(self):
+        return self.e
 
     # set queue for returning data
     def setQueue(self, q):
@@ -67,6 +73,10 @@ class upstream(threading.Thread):
 
     # connects to proxy server
     def createSocket(self, prx):
+
+        if (self.e is None):
+            self.e = threading.Event()
+
         self.s = socks.socksocket()
 
         assert prx['host'] is not None
@@ -74,44 +84,46 @@ class upstream(threading.Thread):
 
         log.debug("connecting to %s proxy: %s:%d" % (self.txtType, prx['host'], prx['port']))
         # socks proxy type can be socks.SOCKS5, socks.SOCKS4, socks.HTTP
-        try:
-            # if 
-            if (prx['type'] is not 'http' and prx['username'] is not None and prx['password'] is not None):
-                self.s.set_proxy(self.type, prx['host'], prx['port'], True, prx['username'], prx['password'])
-            else:
-                self.s.set_proxy(self.type, prx['host'], prx['port'], True)
-            # log.debug("Setting thread event")
-            self.e.set()
 
-        except self.s.ProxyConnectionError as e:
-            log.exception(e.message)
-            raise
-        except self.s.GeneralProxyError as e:
-            log.exception(e.message)
-            raise
-        except Exception as e:
-            log.exception(e.message)
-            raise
+        if (prx['type'] is not 'http' and prx['username'] is not None and prx['password'] is not None):
+            self.s.set_proxy(self.type, prx['host'], prx['port'], True, prx['username'], prx['password'])
+        else:
+            self.s.set_proxy(self.type, prx['host'], prx['port'], True)
+        # log.debug("Setting thread event")
+        self.e.set()
 
         return True
 
     # main start function for threading.Thread
     def run(self):
+
+        if (self.e is None):
+            self.e = threading.Event()
+
         assert self.e is not None
 
-        self.pool.acquire()
+        # self.pool.acquire()
         res = None
 
         log.debug("adding thread %s to pool" % self.getName())
 
-        if (self.s is None):
-            self.createSocket(self.prx)
+        try:
 
-        res = self.makeRequest(self.domain, self.url, self.port, self.method, self.headers, self.postdata)
+            if (self.s is None):
+                self.createSocket(self.prx)
 
-        log.debug("Closing thread: %s" % self.getName())
-        self.pool.release()
-        # thread
+            res = self.makeRequest(self.domain, self.url, self.port, self.method, self.headers, self.postdata)
+        except Exception:
+            # self.q.put({'Exception': sys.exc_info()})
+            pass
+        finally:
+            log.debug("Closing thread: %s" % self.getName())
+
+            if self.s:
+                self.s.close()
+                log.debug("Closing socket connection")
+
+            # self.pool.release()
 
         return res
 
@@ -157,7 +169,10 @@ class upstream(threading.Thread):
                 break
 
         self.s.close()
-        self.q.put({'status': p.get_status_code(), 'length': tlen, 'headers': h, 'body': body, 'request': req})
+
+        res = {'status': p.get_status_code(), 'length': tlen, 'headers': h, 'body': body, 'request': req}
+        print(res)
+        # self.q.put({'status': p.get_status_code(), 'length': tlen, 'headers': h, 'body': body, 'request': req})
 
     # creates raw http request header
     def rawHttpReq(

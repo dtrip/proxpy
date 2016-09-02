@@ -10,7 +10,15 @@ import arg
 # import config
 import parser
 import server
-import log
+import logging
+import proxies
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+logger = logging.getLogger()
+
+
 
 print(Fore.YELLOW + Style.BRIGHT + '''
  ____                                         
@@ -30,19 +38,23 @@ class proxpy(object):
     def __init__(self):
         ap = arg.arg(self)
         self.args = ap.args
-        self.log = log.log(self)
 
         ap.argList()
 
-        p = parser.parser(self)
-        self.proxies = p.proxies
+        # p = parser.parser(self)
+        self.proxies = proxies.proxies(self.args['upstreams'])
+
+        logger.setLevel(logging.DEBUG)
 
     def run(self):
 
-        self.log.info("Starting proxy service")
+        logging.info("Starting proxy service")
 
-        self.server = server.server(self)
-        self.server.listenClients()
+    
+        self.server = server.server()
+        self.server.run()
+        # self.server = server()
+        # self.server.listenClients()
 
 
 if __name__ == "__main__":
@@ -50,4 +62,4 @@ if __name__ == "__main__":
         p = proxpy()
         p.run()
     except Exception as e:
-        print("\n%s%s%s[!] Error: %s\n\n%s%s%s\n" % (Style.BRIGHT, Back.RED, Fore.WHITE, str(e), Style.NORMAL, traceback.format_exc(), Style.RESET_ALL))
+        logging.exception("\n%s%s%s[!] Error: %s\n\n%s%s%s\n" % (Style.BRIGHT, Back.RED, Fore.WHITE, str(e), Style.NORMAL, traceback.format_exc(), Style.RESET_ALL))

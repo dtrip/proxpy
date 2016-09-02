@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 from __future__ import division, print_function
-
+import logging
 import argparse
 import ConfigParser
+
+log = logging.getLogger()
+
 
 class arg(object):
     def __init__(self, p):
@@ -76,7 +79,7 @@ class arg(object):
     def argList(self):
         if (self.args['debug']):
             for k,v in self.args.iteritems():
-                self.proxpy.log.debug("%s:\t%s (%s)", (k,v, str(type(v))[7:-2]))
+                log.debug("%s:\t%s (%s)", (k,v, str(type(v))[7:-2]))
 
     @staticmethod
     def setBoolean(s):
