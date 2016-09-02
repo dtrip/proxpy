@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 import logging
-
+from urlparse import urlparse
 log = logging.getLogger()
 
 
@@ -67,3 +67,8 @@ class parser(object):
             port = splitTmp[1].split(":")[1]
 
         return [type, host, int(port), uname, passw]
+    
+    @staticmethod
+    def parse_proxy(proxy):
+        parsedProxy = urlparse(proxy, scheme='http')
+        return parsedProxy.hostname, parsedProxy.port

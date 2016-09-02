@@ -9,6 +9,8 @@ import tornado.iostream
 import tornado.web
 import tornado.httpclient
 
+import parser
+
 log = logging.getLogger()
 
 __all__ = ['ProxyHandler']
@@ -64,6 +66,7 @@ class ProxyHandler(tornado.web.RequestHandler):
     
     @tornado.web.asynchronous
     def connect(self):
+        log.debug("Start CONNECT to %s" % (self.request.uri))
         host, port = self.request.uri.split(':')
         client = self.request.connection.stream
 
@@ -92,12 +95,37 @@ class ProxyHandler(tornado.web.RequestHandler):
             client.close()
 
         def start_tunnel():
-
+            log.debug("Connect tunnel established to %s" % (self.request.uri))
             client.read_until_close(client_close, read_from_client)
             upstream.read_until_close(upstream_close, read_from_upstream)
             client.write(b'HTTP/1.0 200 Connection established\r\n\r\n')
 
+        def on_proxy_response(data=None):
+            if data:
+                first_line = data.splitlines()[0]
+                http_v, swtatus, text = first_line.split(None, 2)
+                if int(status) ==  200:
+                    log.debug("connect to upstream proxy %s" % (proxy))
+                    start_tunnel()
+                    return
+
+            self.set_status(500)
+            self.finish()
+
+
+        def start_proxy_tunnel():
+            upstream.write("CONNECT %s HTTP/1.1\r\n" % (self.request.uri))
+            upstream.write("Host: %s\r\n" % (self.request.uri))
+            upstream.write("Proxy-Connection: Keep-Alive\r\n\r\n")
+            upstream.read_until("\r\n\r\n", on_proxy_response)
+
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         upstream = tornado.iostream.IOStream(s)
-        upstream.connect((host, int(port)), start_tunnel)
+        # upstream.connect((host, int(port)), start_tunnel)
+        proxy = get_proxy(self.request.uri)
+
+        if proxy:
+            proxy_host, proxy_port = parser.parse_proxy(proxy)
+            upstream.connect((proxy_host, proxy_port), start_proxy_tunnel)
 

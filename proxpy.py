@@ -1,19 +1,17 @@
 #!/usr/bin/env python
+# encoding=utf-8
 from __future__ import division, print_function
-
-# import sys
+import logging
 import traceback
 from colorama import Fore, Back, Style
 
 # import os
-import arg
 # import config
-import parser
-import server
-import logging
-import proxies
 import sys
-
+from proxpy import parser
+from proxpy import proxies
+from proxpy import arg
+from proxpy import server
 reload(sys)
 sys.setdefaultencoding('utf-8')
 logger = logging.getLogger()
@@ -34,7 +32,7 @@ print(Fore.YELLOW + Style.BRIGHT + '''
 ''' + Style.RESET_ALL)
 
 
-class proxpy(object):
+class proxpyService(object):
     def __init__(self):
         ap = arg.arg(self)
         self.args = ap.args
@@ -59,7 +57,7 @@ class proxpy(object):
 
 if __name__ == "__main__":
     try:
-        p = proxpy()
+        p = proxpyService()
         p.run()
     except Exception as e:
         logging.exception("\n%s%s%s[!] Error: %s\n\n%s%s%s\n" % (Style.BRIGHT, Back.RED, Fore.WHITE, str(e), Style.NORMAL, traceback.format_exc(), Style.RESET_ALL))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 import sys
+import logging
 # import threading
 import socket
 import ProxyHandler
@@ -15,6 +16,7 @@ import tornado.iostream
 import tornado.web
 import tornado.httpclient
 
+log = logging.getLogger()
 
 __all__ = ['run']
 
@@ -31,7 +33,8 @@ class server(object):
                 (r'.*', ProxyHandler)
             ])
 
-        app.listen(8080)
+        log.debug("Listening on port: %d" % (port))
+        app.listen(port)
 
         # httpServer = tornado.httpserver.HTTPServer(self.app)
         # httpServer.listen(8080)
@@ -39,5 +42,6 @@ class server(object):
         ioloop = tornado.ioloop.IOLoop.instance()
 
         if start_ioloop:
+            log.debug("Starting IO Loop")
             ioloop.start()
 
