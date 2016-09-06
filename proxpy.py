@@ -50,7 +50,7 @@ class proxpyService(object):
         logg.info("Starting proxy service")
 
     
-        self.server = server.server()
+        self.server = server.server(self.args)
         self.server.run()
 
 
