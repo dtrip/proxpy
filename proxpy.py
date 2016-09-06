@@ -1,20 +1,17 @@
 #!/usr/bin/env python
-# encoding=utf-8
-from __future__ import division, print_function
 import logging
 import traceback
 from colorama import Fore, Back, Style
 
-# import os
-# import config
+import os
 import sys
-from proxpy import parser
+import proxpy
 from proxpy import proxies
 from proxpy import arg
+# from proxpy import log
 from proxpy import server
-reload(sys)
-sys.setdefaultencoding('utf-8')
-logger = logging.getLogger()
+# sys.setdefaultencoding('utf-8')
+logg = logging.getLogger()
 
 
 
@@ -37,22 +34,24 @@ class proxpyService(object):
         ap = arg.arg(self)
         self.args = ap.args
 
-        ap.argList()
+        if self.args['debug']:
+            logg.setLevel(logging.DEBUG)
 
+
+        ap.argList()
         # p = parser.parser(self)
         self.proxies = proxies.proxies(self.args['upstreams'])
 
-        logger.setLevel(logging.DEBUG)
+        if self.args['debug']:
+            logg.debug("Debug enabled")
 
     def run(self):
 
-        logging.info("Starting proxy service")
+        logg.info("Starting proxy service")
 
     
         self.server = server.server()
         self.server.run()
-        # self.server = server()
-        # self.server.listenClients()
 
 
 if __name__ == "__main__":
@@ -60,4 +59,6 @@ if __name__ == "__main__":
         p = proxpyService()
         p.run()
     except Exception as e:
-        logging.exception("\n%s%s%s[!] Error: %s\n\n%s%s%s\n" % (Style.BRIGHT, Back.RED, Fore.WHITE, str(e), Style.NORMAL, traceback.format_exc(), Style.RESET_ALL))
+        logg.critical("\n%s%s%s[!] Error: %s\n\n%s%s%s\n" % (Style.BRIGHT, Back.RED, Fore.WHITE, str(e), Style.NORMAL, traceback.format_exc(), Style.RESET_ALL))
+    finally:
+        print("\n")

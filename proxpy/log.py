@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-from __future__ import division, print_function
+#!/usr/bin/env python3
 from colorama import Fore, Style, Back
 import logging
-# import traceback
-QUESTIONLVL = 9
-
 
 class log(logging.getLoggerClass()):
     __FORMAT = {
@@ -44,13 +40,15 @@ class log(logging.getLoggerClass()):
 
 
 class LogFormatter(logging.Formatter):
-    err_fmt = ("[{0}{1}E{2}] {3}{4}{5}[%(module)s:%(lineno)s] %(msg)s {6}".format(Style.BRIGHT, Fore.RED, Style.RESET_ALL, Style.BRIGHT, Fore.WHITE, Back.RED, Style.RESET_ALL))
-    dbg_fmt = "[" + Style.BRIGHT + Fore.CYAN + "*" + Style.RESET_ALL + "] %(msg)s"
-    inf_fmt = "[" + Style.BRIGHT + Fore.BLUE + "!" + Style.RESET_ALL + "] %(msg)s"
-    wrn_fmt = "[" + Style.BRIGHT + Fore.YELLOW + "W" + Style.RESET_ALL + "] %(msg)s"
+    err_fmt = ("[{0}{1}E{2}] {3}{4}[%(module)s %(lineno)s] %(msg)s {5}".format(Style.BRIGHT, Fore.RED, Style.RESET_ALL, Style.BRIGHT, Fore.RED, Style.RESET_ALL))
+    cri_fmt = ("[{0}{1}C{2}] {3}{4}{5}[%(module)s %(lineno)s] %(msg)s {6}".format(Style.BRIGHT, Fore.RED, Style.RESET_ALL, Style.BRIGHT, Fore.WHITE, Back.RED, Style.RESET_ALL))
+    dbg_fmt = ("[{0}{1}*{2}] %(msg)s".format(Style.BRIGHT, Fore.CYAN, Style.RESET_ALL))
+    # inf_fmt = "[" + Style.BRIGHT + Fore.BLUE + "I" + Style.RESET_ALL + "] %(msg)s"
+    inf_fmt = ("[{0}{1}I{2}] %(msg)s".format(Style.BRIGHT, Fore.BLUE, Style.RESET_ALL))
+    wrn_fmt = ("[{0}{1}W{2}] %(msg)s".format(Style.BRIGHT, Fore.YELLOW, Style.RESET_ALL))
     # qst_fmt = "[" + Style.BRIGHT + Fore.CYAN + "?" + Style.RESET_ALL + "] %(msg)s"
 
-    def __init__(self, fmt="%(levelno): %(msg)s"):
+    def __init__(self, fmt="%(levelno)s: %(msg)s"):
         logging.Formatter.__init__(self, fmt)
 
     def format(self, record):
@@ -65,10 +63,14 @@ class LogFormatter(logging.Formatter):
             self._fmt = LogFormatter.err_fmt
         elif record.levelno == logging.WARNING:
             self._fmt = LogFormatter.wrn_fmt
+        elif record.levelno == logging.CRITICAL:
+            self._fmt = LogFormatter.cri_fmt
         # elif record.levelno == QUESTIONLVL:
             # self._fmt = LogFormatter.qst_fmt
+        # logging.Formatter.format(self, self._fmt)
+        logging.Formatter.__init__(self, self._fmt)
 
-        result = logging.Formatter.format(self, record)
-        self._fmt = format_orig
-
-        return result 
+        return super(LogFormatter, self).format(record)
+        # result = logging.Formatter.format(self, record)
+        # self._fmt = format_orig
+        # return result 

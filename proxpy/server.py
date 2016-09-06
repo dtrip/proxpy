@@ -8,4 +8,10 @@ import socket
 # import signal
 # import receiver
 
-class server:
+class server(object):
+    def __init__(self):
+        pass
+
+
+    def run(self):
+        pass

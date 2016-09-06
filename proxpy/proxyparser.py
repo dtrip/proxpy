@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 import logging
-from urlparse import urlparse
+from urllib.parse import urlparse
 log = logging.getLogger()
 
 
-class parser(object):
+class proxyparser(object):
     def __init__(self, conf):
         self.rdata = []
         self.proxies = []
@@ -31,7 +31,7 @@ class parser(object):
             raise ValueError("No data proxy list data to parse")
 
         for px in self.rdata:
-            pxs = parser.splitProxyString(px)
+            pxs = proxyparser.splitProxyString(px)
 
             self.proxies.append({"type": pxs[0], "host": pxs[1], "port": pxs[2], "username": pxs[3], "password": pxs[4]})
 

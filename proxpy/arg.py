@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import division, print_function
-import logging
+# import logging
 import argparse
-import ConfigParser
+import configparser
+from proxpy import log
 
-log = logging.getLogger()
+logger = log.log()
+# log = logging.getLogger()
 
 
 class arg(object):
@@ -38,7 +39,7 @@ class arg(object):
                 }
 
         if args.config:
-            config = ConfigParser.SafeConfigParser()
+            config = configparser.SafeConfigParser()
             config.read([args.config])
             defaults = dict(config.items("General"))
 
@@ -72,15 +73,15 @@ class arg(object):
         
 
         # if verbose is set, also flips debug flag
-        if (self.args['verbose']):
+        if self.args['verbose']:
             self.args['debug'] = True
 
         return True
 
     def argList(self):
-        if (self.args['debug']):
-            for k,v in self.args.iteritems():
-                log.debug("%s:\t%s (%s)", (k,v, str(type(v))[7:-2]))
+        if self.args['debug']:
+            for k,v in self.args.items():
+                logger.debug("%s:\t%s (%s)" % (k,v, str(type(v))[7:-2]))
 
     @staticmethod
     def setBoolean(s):

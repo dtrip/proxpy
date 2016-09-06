@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from __future__ import division, print_function
-import parser
+# from __future__ import division, print_function
+from proxpy import proxyparser
 import logging
 import random
 
@@ -13,7 +13,7 @@ class proxies(object):
 
         self.conf = conf
 
-        p = parser.parser(conf)
+        p = proxyparser.proxyparser(conf)
         self.proxies = p.proxies
 
     def getRandom(self):
