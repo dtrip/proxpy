@@ -5,7 +5,8 @@ import fcntl
 import os
 import logging
 import socket
-from proxpy import connection, Forward
+import threading
+from proxpy import Forward
 
 log = logging.getLogger()
 
@@ -14,33 +15,20 @@ class server(object):
     def __init__(self, args):
         self.args = args
         self.address = (self.args['interface'], self.args['port'])
-        self.srvaddr = ('127.0.0.1', 9050)
         self.srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.srv.bind(self.address)
         self.srv.listen(200)
-        self.connections = {}
-        self.readsockets = []
-        self.writesockets = []
-
 
         self.input_list = []
         self.channel = {}
 
-        self.allsockets = [self.srv]
-        self.connection_count = 0
 
     def run(self):
         loop = 0
         self.input_list.append(self.srv)
 
         while True:
-            # r, w, e = select.select(
-            #         # [self.srv]+self.readsockets,
-            #         self.writesockets,
-            #         self.allsockets,
-            #         60
-            # )
 
             r, w, e = select.select(self.input_list, [], [])
 
@@ -51,10 +39,6 @@ class server(object):
                 if self.s is self.srv:
                     self.on_accept()
                     break
-                    # self.open()C
-                # else:
-                    # if s in self.connections:
-                        # self.connections[s].readfrom(s)
                 self.data = self.s.recv(self.args['receive'])
 
                 if len(self.data) == 0:
@@ -63,22 +47,15 @@ class server(object):
                 else:
                     self.on_recv()
 
-            # for s in w:
-                # if s in self.connections:
-                    # self.connections[s].writeto(s)
-
-            # handle errors (close connections)
-            # for s in e:
-                # log.error("Socket error closing connection")
-                # if s in self.connections:
-                    # self.connections[s].close()
-
-        # self.srv.close()
-        # self.srv = None
 
     def on_accept(self):
-        fwd = Forward.Forward().start('127.0.0.1', '9050')
+        fwd = Forward.Forward().start('127.0.0.1', 9050)
         clientsock, clientaddr = self.srv.accept()
+        clientsock.settimeout(60)
+        
+        # t = threading.Thread(target = self.listenToClient, args = (clientsock, clientaddr))
+        # fwd.setDaemon(True)
+        # fwd.start()
 
         if fwd:
             log.debug("%s has connected" % (str(clientaddr)))
@@ -89,6 +66,24 @@ class server(object):
         else:
             log.warning("Can't establish connection with remote server. Closing client side connection: %s" % (clientaddr))
             clientsock.close()
+
+    def listenToClient(self, c, addr):
+       size = 1024
+
+       while True:
+            try:
+               data = c.recv(size)
+
+               if data:
+                   response = data
+                   c.send(response)
+               else:
+                    log.error("client disconnected")
+                    raise error('client disconnected')
+            except:
+                c.close()
+                # log.exception(e)
+                return False
     
     def on_close(self):
         log.info("%s has disconnected" % (str(self.s.getpeername())))
@@ -108,39 +103,3 @@ class server(object):
 
         # log.info(data)
         self.channel[self.s].send(data)
-
-    def activateRead(self, sock):
-        if not sock in self.readsockets:
-            log.debug("Activating read socket for %s" % (str(sock)))
-            self.readsockets.append(sock)
-
-    def deactivateRead(self, sock):
-        if sock in self.readsockets:
-            log.debug("removing read socket for %s" % (str(sock)))
-            self.readsockets.remove(sock)
-
-    def activateWrite(self, sock):
-        if not sock in self.writesockets:
-            log.debug("activating write socket for %s" % (str(sock)))
-            self.writesockets.append(sock)
-
-    def deactivateWrite(self, sock):
-        if sock in self.writesockets:
-            log.debug("removing write socket for %s" % (str(sock)))
-            self.writesockets.remove(sock)
-
-    def registerSocket(self, sock, conn):
-        log.debug("Registering socket %s at connection %s" % (str(sock), str(conn)))
-        self.connections[sock] = conn
-        self.allsockets.append(sock)
-
-    def unregisterSocket(self, sock, conn):
-        log.debug("Removing socket %s at connection %s" % (str(sock), str(conn)))
-        del self.connections[sock]
-        self.allsockets.remove(sock)
-
-    def open(self):
-        log.debug("Opening new connection %s" % (str(self.address)))
-        conn = connection.connection(self, self.srv, self.srvaddr, self.args)
-        conn.connect()
-

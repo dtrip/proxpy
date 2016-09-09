@@ -4,3 +4,4 @@ from .proxpy import arg
 from .proxpy import server
 from .proxpy import proxyparser
 from .proxpy import proxies
+from .proxpy import Forward
