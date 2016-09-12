@@ -3,3 +3,5 @@
 *.py[cod]
 .python-version
 *.log
+
+__pycache__
