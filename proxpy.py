@@ -13,8 +13,6 @@ from proxpy import server
 # sys.setdefaultencoding('utf-8')
 logg = logging.getLogger()
 
-
-
 print(Fore.YELLOW + Style.BRIGHT + '''
  ____                                         
 /\  _`\                                        
@@ -28,7 +26,6 @@ print(Fore.YELLOW + Style.BRIGHT + '''
 
 ''' + Style.RESET_ALL)
 
-
 class proxpyService(object):
     def __init__(self):
         ap = arg.arg(self)
@@ -37,9 +34,7 @@ class proxpyService(object):
         if self.args['debug']:
             logg.setLevel(logging.DEBUG)
 
-
         ap.argList()
-        # p = parser.parser(self)
         self.proxies = proxies.proxies(self.args['upstreams'])
 
         if self.args['debug']:
@@ -48,11 +43,9 @@ class proxpyService(object):
     def run(self):
 
         logg.info("Starting proxy service")
-
     
-        self.server = server.server(self.args)
+        self.server = server.server(self.args, self.proxies)
         self.server.run()
-
 
 if __name__ == "__main__":
     try:

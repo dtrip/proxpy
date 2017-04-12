@@ -54,11 +54,9 @@ class receiver(threading.Thread):
             # create socket and and make request
         except socket.error as e:
             if self.s:
-		self.s.close()
-            
+                self.s.close()
+                        
             if conn:
                 conn.close()
 
             self.proxpy.log.error("Runtime Error: %s", (msg));
-
-

@@ -25,5 +25,3 @@ class Forward(object):
             raise
             return False
 
-
-
