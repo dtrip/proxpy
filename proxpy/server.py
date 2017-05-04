@@ -5,6 +5,7 @@ import fcntl
 import os
 import logging
 import socket
+import ssl
 import socks
 import threading
 # import time
@@ -57,20 +58,26 @@ class server(object):
             s.sendall(req)
 
             while True:
-                data = s.recv(self.args['receive'])
-                if len(data) > 0:
-                    c.send(data)
-                else:
-                    break
+                try:
+                    data = s.recv(self.args['receive'])
+                    if len(data) > 0:
+                        c.send(data)
+                    else:
+                        break
+                except socket.timeout:
+                    log.warning("HTTP Timeout")
 
             s.close()
             c.close()
         except Exception as e:
+            log.error(str(e))
             if s:
                 s.close()
             if c:
                 c.close()
-            log.exception(e)
+        except ConnectionRefusedError as cre:
+            log.error(cre)
+            
 
     def on_accept(self):
         clientsock, clientaddr = self.srv.accept()

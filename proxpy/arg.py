@@ -53,11 +53,11 @@ class arg(object):
         self.parser.add_argument('-d', '--debug', help='output debugging information', action='store_true')
         self.parser.add_argument('-i', '--interface', help='Interface for proxy service to listen in on', type=str)
         self.parser.add_argument('-l', '--log', help='log file', metavar='FILE')
-        self.parser.add_argument('-m', '--receive', help='maxium number of bytes proxy service will receive', metavar='N', type=int)
+        self.parser.add_argument('-m', '--receive', help='maxium number of bytes proxy service will receive. Default: 4096', metavar='N', default=4096, type=int)
 
         self.parser.add_argument('-p', '--port', help='proxy service port', metavar='N', type=int)
         self.parser.add_argument('-q', '--quiet', help='suppress output', action='store_true')
-        self.parser.add_argument('-r', '--dns', help='Perform DNS lookup\'s over SOCKS proxxy', action='store_true')
+        self.parser.add_argument('-r', '--dns', help='Perform DNS lookup\'s over SOCKS prxxy', action='store_true')
         self.parser.add_argument('-s', '--daemon', help='Enable Proxy deamon service', action='store_true')
         # self.parser.add_argument('-T', '--transparent', help='run proxy daemon as transparent proxy', action='store_true')
         self.parser.add_argument('-t', '--timeout', help="socket timeout in seconds", type=int)
