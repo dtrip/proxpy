@@ -67,21 +67,25 @@ class server(object):
 
                 # abs = Parser.Parser.checkReqestAbsolute(reqPath)
                 # log.debug(abs)
-#
                 # if not absr
                     # req = Parser.Parser.addHttpsToReqPath(req)
 
-                # log.debug("Sending connect to proxy: \n %s" % (req))
-                s.sendall(req)
-                req = self.recFromTo(s, c)
-                # log.debug(req)
+                log.debug("Sending connect to proxy: \n %s" % (req))
+                s.send(req)
+                req = s.recv(4096)
+                # req = self.recFrom(s)
+                log.debug(req)
 
-                # c.sendall(req)
+                log.debug("forwarding response to client")
+                c.send(req)
+                # req = self.recFrom(c)
+                req = c.recv(4096)
 
+                # log.debug("Closing client socket and accepting a new one")
+                # c.close()
                 # c, addr = self.srv.accept()
                 # print(data)
                 # req = c.recv(self.args['receive'])
-                req = self.recFromTo(c, s)
 
                 # req = req.decode('utf-16')
                 log.debug("Next Request: %s" % (req))
@@ -94,16 +98,18 @@ class server(object):
 
 
 
-            s.sendall(req)
+            s.send(req)
 
             data = self.recFrom(s)
             c.sendall(data)
+            # c.sendall(data)
 
             # while True:
             #     try:
             #         data = s.recv(self.args['receive'])
+            #         log.debug("FInal data rec: %s" % (data))
             #         if len(data) > 0:
-            #             c.sendall(data)
+            #             c.send(data)
             #         else:
             #             break
             #     except socket.timeout:
@@ -114,8 +120,10 @@ class server(object):
         except Exception as e:
             log.exception(str(e))
             if s:
+                log.debug("Closing socket to proxy server")
                 s.close()
             if c:
+                log.debug("Closing socket to client")
                 c.close()
         except ConnectionRefusedError as cre:
             log.error(cre)
@@ -183,11 +191,11 @@ class server(object):
             while True:
                 chunk = conn.recv(4096)
 
-                if chunk == b'':
-                    break
-                else:
+                if len(chunk) > 0:
                     chunks.append(chunk)
-                bytes_recd = bytes_recd + len(chunk)
+                    bytes_recd = bytes_recd + len(chunk)
+                else:
+                    break
 
         except Exception as e:
             log.debug(e)
@@ -213,3 +221,12 @@ class server(object):
             log.debug(e)
 
         return True
+
+    def hexDump(src, length=16):
+        result = []
+        digists = 4 if isinstance(src, unicode) else 2
+        for i in range(len(src), length):
+            s = src[i:i+length]
+            hexa = b' '.join(['%0*X' % (digits, ord(x)) for x in s])
+            text = b''.join([x if 0x20  <= ord(x) < 0x7F else b'.' for x in s])
+            result.append(b"%04X %-*s %s" % (i, length*(digits + 1), hexa, text))
