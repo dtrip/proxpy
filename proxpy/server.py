@@ -11,6 +11,7 @@ import threading
 # import time
 import urllib.request
 from proxpy import Forward
+from proxpy import Parser
 
 log = logging.getLogger()
 
@@ -44,6 +45,7 @@ class server(object):
             t.start()
 
     def proxyThread(self, c, addr):
+        log.debug("---- New Proxy thread: %s" % (str(addr)))
         req = c.recv(self.args['receive'])
         
         p = self.proxies.getRandom()
@@ -55,22 +57,62 @@ class server(object):
             s.settimeout(60)
             # s.connect(('23.19.32.110',3128))
             s.connect((p['host'], int(p['port'])))
+
+            log.debug("Request:\n%s" % (req))
+
+            meth = Parser.Parser.getHttpMethod(req)
+
+            if meth.upper() == 'CONNECT':
+                # reqPath = Parser.Parser.getReqPath(req)
+
+                # abs = Parser.Parser.checkReqestAbsolute(reqPath)
+                # log.debug(abs)
+#
+                # if not absr
+                    # req = Parser.Parser.addHttpsToReqPath(req)
+
+                # log.debug("Sending connect to proxy: \n %s" % (req))
+                s.sendall(req)
+                req = self.recFromTo(s, c)
+                # log.debug(req)
+
+                # c.sendall(req)
+
+                # c, addr = self.srv.accept()
+                # print(data)
+                # req = c.recv(self.args['receive'])
+                req = self.recFromTo(c, s)
+
+                # req = req.decode('utf-16')
+                log.debug("Next Request: %s" % (req))
+
+                # req = req.encode()
+                # if not abs:
+                    # req = Parser.Parser.addHttpsToReqPath(req)
+
+
+
+
+
             s.sendall(req)
 
-            while True:
-                try:
-                    data = s.recv(self.args['receive'])
-                    if len(data) > 0:
-                        c.send(data)
-                    else:
-                        break
-                except socket.timeout:
-                    log.warning("HTTP Timeout")
+            data = self.recFrom(s)
+            c.sendall(data)
+
+            # while True:
+            #     try:
+            #         data = s.recv(self.args['receive'])
+            #         if len(data) > 0:
+            #             c.sendall(data)
+            #         else:
+            #             break
+            #     except socket.timeout:
+            #         log.warning("HTTP Timeout")
 
             s.close()
             c.close()
         except Exception as e:
-            log.error(str(e))
+            log.exception(str(e))
             if s:
                 s.close()
             if c:
@@ -129,3 +171,45 @@ class server(object):
 
         # log.info(data)
         self.channel[self.s].send(data)
+
+    def recFrom(self, conn):
+        chunks = []
+        bytes_recd = 0
+        # buffer = bytearray()
+        conn.settimeout(60)
+
+        try:
+
+            while True:
+                chunk = conn.recv(4096)
+
+                if chunk == b'':
+                    break
+                else:
+                    chunks.append(chunk)
+                bytes_recd = bytes_recd + len(chunk)
+
+        except Exception as e:
+            log.debug(e)
+
+        buffer = b''.join(chunks)
+
+        log.debug("Total Data Received: %s" % (buffer))
+        return buffer
+
+    def recFromTo(self, cFrom, cTo):
+        cFrom.settimeout(60)
+
+        try:
+            while True:
+                data = cFrom.recv(self.args['receive'])
+                log.debug("Data Transmitted: %s" % (data))
+
+                if len(data) > 0:
+                    cTo.send(data)
+                else:
+                    break
+        except Exception as e:
+            log.debug(e)
+
+        return True

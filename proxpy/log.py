@@ -14,7 +14,8 @@ class log(logging.getLoggerClass()):
         formatter = LogFormatter()
         self.root.setLevel(logging.INFO)
         self.root.handlers = []
-        self.handler = logging.StreamHandler()
+        # self.handler = logging.StreamHandler()
+        self.handler = logging.FileHandler('proxpy.log')
         self.handler.setFormatter(formatter)
         self.root.addHandler(self.handler)
 
